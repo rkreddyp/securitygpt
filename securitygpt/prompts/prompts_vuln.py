@@ -4,7 +4,7 @@ from pydantic.dataclasses import dataclass
 from pydantic import BaseModel, Field, create_model
 import openai, boto3, requests, json
 
-from schema.schema_base_prompt import SystemMessage, UserMessage, PromptContext, ChatCompletionMessage, MessageRole, Message
+from securitygpt.schema.schema_base_prompt import SystemMessage, UserMessage, PromptContext, ChatCompletionMessage, MessageRole, Message
 
 
 class PromptCVERole(BaseModel):

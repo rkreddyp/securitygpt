@@ -1,12 +1,15 @@
+import sys
+sys.path.append('..')
+sys.path.append('../..')
 
-from schema.schema_cve import CVEStructureJson, CVERemediationJson
-from prompts.prompts_knowledge_graph import PromptKnowledgeGraph
-from schema.schema_knowledge_graph import KnowledgeGraph, Node, Edge
-from utils.url_utils import headless_browser_utils
-from tools.openai import chat_complete
+from securitygpt.schema.schema_cve import CVEStructureJson, CVERemediationJson
+from securitygpt.prompts.prompts_knowledge_graph import PromptKnowledgeGraph
+from securitygpt.schema.schema_knowledge_graph import KnowledgeGraph, Node, Edge
+from securitygpt.utils.url_utils import headless_browser_utils
+from securitygpt.tools.openai import chat_complete
 from typing import List, Dict, Any, Optional
-from schema.schema_base_openai import openai_function
-from utils import graph_utils
+from securitygpt.schema.schema_base_openai import openai_function
+from securitygpt.utils import graph_utils
 from selenium.webdriver.common.by import By
 import ast
 

@@ -2,7 +2,7 @@
 from enum import Enum, IntEnum
 from pydantic import Field
 from typing import List, Dict, Optional, Type, Union
-from schema.schema_base_openai import OpenAISchema
+from securitygpt.schema.schema_base_openai import OpenAISchema
 
 
 class CVERemediationJson(OpenAISchema):

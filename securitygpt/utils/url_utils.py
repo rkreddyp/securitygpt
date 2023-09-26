@@ -1,29 +1,110 @@
 
 
-from schema.schema_resource import URLResource
+from securitygpt.schema.schema_resource import URLResource
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 from typing import List, Optional
-import requests
+import requests,time
 from url_normalize import url_normalize
 from bs4 import BeautifulSoup   # For HTML parsing
 import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from string import punctuation
-
-import requests
-from bs4 import BeautifulSoup
-
+from bs4.element import Comment
+import urllib.request
 import functools
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver import FirefoxOptions
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
+
+
+class headless_browser_utils:
+
+    def initiate_driver_return_browser(url):
+        print ( "initiate_driver_return_browser")
+        opts = FirefoxOptions()
+
+        fp = webdriver.FirefoxProfile()
+        fp.set_preference("security.fileuri.strict_origin_policy", False);
+        fp.set_preference("javascript.enabled", False);
+        fp.update_preferences()
+        opts.add_argument("--headless")
+        opts.set_preference("browser.download.folderList", 2)
+        opts.set_preference("browser.download.dir", "/tmp/") 
+        opts.set_preference("browser.helperApps.neverAsk.saveToDisk","application/text/csv")
+        #browser = webdriver.Firefox(firefox_options=opts , log_path='/tmp/geckodriver.log', executable_path = '/tmp/geckodriver', firefox_profile=fp)
+        try :
+            #browser = webdriver.Firefox(options=opts , log_path='/tmp/geckodriver.log', executable_path = '/tmp/geckodriver')
+            browser = webdriver.Firefox(options=opts)
+        except :
+            time.sleep(5)
+            try :
+                #browser = webdriver.Firefox(options=opts , log_path='/tmp/geckodriver.log', executable_path = '/tmp/geckodriver')
+                browser = webdriver.Firefox(options=opts )
+            except Exception as e: print(e)
+
+        delay = 4
+        browser.set_window_size(1920,1920)
+        try :
+            browser.get(url)
+        except Exception as e:
+            print(e) 
+        
+        time.sleep(2)
+        return browser 
+
+
 
 class url_parse_utils:
     
+
+    def initiate_driver_return_browser(url):
+        print ( "initiate_driver_return_browser")
+        opts = FirefoxOptions()
+
+        fp = webdriver.FirefoxProfile()
+        fp.set_preference("security.fileuri.strict_origin_policy", False);
+        fp.set_preference("javascript.enabled", False);
+        fp.update_preferences()
+        opts.add_argument("--headless")
+        opts.set_preference("browser.download.folderList", 2)
+        opts.set_preference("browser.download.dir", "/tmp/") 
+        opts.set_preference("browser.helperApps.neverAsk.saveToDisk","application/text/csv")
+        #browser = webdriver.Firefox(firefox_options=opts , log_path='/tmp/geckodriver.log', executable_path = '/tmp/geckodriver', firefox_profile=fp)
+        try :
+            #browser = webdriver.Firefox(options=opts , log_path='/tmp/geckodriver.log', executable_path = '/tmp/geckodriver')
+            browser = webdriver.Firefox(options=opts)
+        except :
+            time.sleep(5)
+            try :
+                #browser = webdriver.Firefox(options=opts , log_path='/tmp/geckodriver.log', executable_path = '/tmp/geckodriver')
+                browser = webdriver.Firefox(options=opts )
+            except Exception as e: print(e)
+
+        delay = 4
+        browser.set_window_size(1920,1920)
+        try :
+            browser.get(url)
+        except Exception as e:
+            print(e) 
+        
+        time.sleep(2)
+        return browser 
+
+
     @staticmethod
     def fetch_soup(url: str) -> BeautifulSoup:
-        response = requests.get(url)
+        timeout_seconds = 5
+        response = requests.get(url,verify=False,timeout=timeout_seconds)
         soup = BeautifulSoup(response.text, "html.parser")
         return soup
     
@@ -42,13 +123,56 @@ class url_parse_utils:
     def fetch_paragraphs(soup:BeautifulSoup) -> List[str]:
         paragraphs = [p.text for p in soup.find_all("p") if len(p.text) > 50]
         return paragraphs
-        
+
+    @staticmethod   
+    def tag_visible(element):
+        if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+            return False
+        if isinstance(element, Comment):
+            return False
+        return True
+
+    @staticmethod    
+    def fetch_text(url) -> List[str]:
+        text_arr = []
+        try :
+
+            browser = url_parse_utils.initiate_driver_return_browser(url)
+            el = browser.find_element(By.TAG_NAME,'body')
+            for text in (el.text).split('\n'):
+                if len (text) > 200:
+                    #print (url)
+                    #print ("fetchtext --", text)
+                    text_arr.append(text)
+            return ".".join (text_arr)
+        except Exception as e:
+            print ("exceptin in fetch_text")
+            return "NA"
 
     @staticmethod    
     def fetch_tables(soup: BeautifulSoup) -> str:
         tables = soup.find_all('table')
         return tables
+
     
+    @staticmethod    
+    def fetch_inline_images(soup: BeautifulSoup) -> str:
+            
+            # Find inline images and their descriptions
+        image_elements = soup.find_all('img')  # Adjust the tag name as needed
+
+        for img in image_elements:
+            # Extract image source URL
+            img_src = img.get('src')
+
+            # Extract image description (if available)
+            img_description = img.get('alt', '')
+
+            # Print image source and description
+            print("Image Source:", img_src)
+            print("Image Description:", img_description)
+            print("-" * 40)  # Separator between images
+
     @staticmethod    
     def fetch_tables_markdown(soup: BeautifulSoup) -> str:
         tables = soup.find_all('table')
@@ -80,6 +204,7 @@ class BaseURL:
         self.visited = False
         self.content = "NA"
         self.title = "NA"
+        self.paragraphs = "NA"
 
 class URL(BaseURL):
     def __init__(self, url: str, description: str = "NA"):
@@ -87,8 +212,10 @@ class URL(BaseURL):
         self.soup = url_parse_utils.fetch_soup(url)
         #self.title = url_parse_utils.fetch_title(self.soup)
         self.content = url_parse_utils.fetch_content(self.soup)
-        self.paragraphs = url_parse_utils.fetch_paragraphs(self.soup)
+        #self.paragraphs = url_parse_utils.fetch_paragraphs(self.soup)
+        self.urltext = " ".join ( self.paragraphs ).replace('\n', ' ').replace('\r', '')
         self.tables = url_parse_utils.fetch_tables_markdown(self.soup)
+        self.paragraphs = url_parse_utils.fetch_text(url)
 
 class URLManager:
 
@@ -97,7 +224,7 @@ class URLManager:
             urls = [urls]  # Convert a single URL to a list with one element
         self.urls = []
         for url in urls:
-            self.add_url(url)
+            self.add_url(url) # calls URL(url, description)
 
     def __call__(self, url: str, description: str = "NA"):
         self.add_url(url, description)
@@ -108,9 +235,12 @@ class URLManager:
         if existing_url:
             print(f"URL '{url}' already exists. Skipping.")
         else:
-            url_obj = URL(url, description)
-            self.urls.append(url_obj)
-
+            try :
+                url_obj = URL(url, description)
+                self.urls.append(url_obj)
+            except Exception as e:
+                print (e)
+                pass
     def get_all_urls(self):
         return self.urls
     
@@ -157,52 +287,6 @@ class URLResourcePool():
 
     def get_unvisited(self) -> List[URLResource]:
         return [r for r in self.resources if not r.visited]
-
-class URLOld() :
-
-    def __init__(self, url: str, description: str = "NA", visited: bool = False, content: str = "NA", title: str = "NA"):
-        self.url = url
-        self.description = description
-        self.visited = visited
-        self.content = content
-        self.title = title
-
-    def __str__(self):
-        return f"URL(url={self.url}, description={self.description}, visited={self.visited}, content={self.content}, title={self.title})"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __eq__(self, other):
-        return self.url == other.url
-
-    def __hash__(self):
-        return hash(self.url)
-
-    def visit(self, content: str = "") -> None:
-        self.visited = True
-        self.content = content
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "url": self.url,
-            "description": self.description,
-            "visited": self.visited,
-            "content": self.content,
-            "title": self.title,
-        }
-
-    
-
-    @staticmethod
-    def from_dict(d: Dict[str, Any]) -> "URL":
-        return URL(
-            url=d["url"],
-            description=d["description"],
-            visited=d["visited"],
-            content=d["content"],
-            title=d["title"],
-        )
 
 class URLParsers(ABC):
     @abstractmethod
