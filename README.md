@@ -40,7 +40,7 @@ summmarize_cve("CVE-2021-36934")
 
 ```
 
-## Security ResearchG
+## Security Research
 
 ### Knowledge Graphs
 
