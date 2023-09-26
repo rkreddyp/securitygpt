@@ -10,7 +10,7 @@ from prompts.prompts_vuln import PromptCVERole, PromptCVETask
 from tools.openai import chat_complete
 from utils import cve_utils
 
-def summmarize_cve(cve_id:str):
+def summarize_cve(cve_id:str):
 
     paragraphs = cve_utils.run(cve_id)
 

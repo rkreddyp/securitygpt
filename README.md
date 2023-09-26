@@ -6,7 +6,7 @@ As a security engineer, you dont want to worry about writing correct prompts, we
 
 # Examples
 
-## VulnGPT
+## Understand Vulnerabilities
 
 ### Summarize CVEs
 
@@ -37,5 +37,23 @@ summmarize_cve("CVE-2021-36934")
   },
   "summary": "This is a potential security issue. Please refer to the provided links for more information."
 }
+
+```
+
+## Security ResearchG
+
+### Knowledge Graphs
+
+Explanation - https://www.linkedin.com/pulse/threat-knowledge-graphs-using-generative-ai-venkat-pothamsetty
+
+```
+import sys
+sys.path.append('../')
+from securitygpt.gpts.researchgpt.graphgpt import draw_threat_graph
+
+url = "https://www.wiz.io/blog/38-terabytes-of-private-data-accidentally-exposed-by-microsoft-ai-researchers"
+objective = "in depth understand the attack details and remediations exhaustively"
+
+dot = draw_threat_graph(url,objective)
 
 ```
