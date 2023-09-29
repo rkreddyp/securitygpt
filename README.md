@@ -6,6 +6,31 @@ As a security engineer, you dont want to worry about writing correct prompts, we
 
 # Examples
 
+## Anonymize Data before you send to LLM
+```
+from gpts.safegpt.anonymize import encrypt, decrypt, get_mappings, decrypt_dataframe
+anonymize_result, analyzer_results = encrypt(alert_text)
+print (anonymize_result.text)
+
+
+mapping_df = get_mappings(alert_text, analyzer_results,anonymize_result)
+
+
+from tools.openai import chat_complete
+system_content = "you are an awesome information security engineer, well versed with incident response analysis"
+prompt_string = "for this alert and remediation below, write an incident report: " + anonymize_result.text 
+completion = chat_complete (system_content=system_content, user_content=prompt_string).completion
+print (completion["choices"][0].message.content)
+
+mapping_df = get_mappings(alert_text, analyzer_results,anonymize_result)
+
+decrypted_text = decrypt(completion["choices"][0].message.content, mapping_df)
+
+print (decrypted_text)
+
+```
+
+
 ## Understand Vulnerabilities
 
 ### Summarize CVEs
